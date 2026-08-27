@@ -645,10 +645,14 @@ if (!absoluteCoastAchievedAge &&
 }
 
 // --- BOX-MULLER GAUSSIAN RANDOMIZER ---
-function generateGaussianRandom(mean, standardDeviation) {
+// Accepts an injectable `rng` (defaults to Math.random) so callers — namely the Monte
+// Carlo engine's tests — can pass a seeded PRNG and get fully reproducible output.
+// Production behavior is unchanged: no caller passes anything today, so this still
+// resolves to Math.random() exactly as before.
+function generateGaussianRandom(mean, standardDeviation, rng = Math.random) {
   let u = 0, v = 0;
-  while(u === 0) u = Math.random();
-  while(v === 0) v = Math.random();
+  while(u === 0) u = rng();
+  while(v === 0) v = rng();
   const standardNormal = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   return mean + standardNormal * standardDeviation;
 }
@@ -665,11 +669,11 @@ function generateGaussianRandom(mean, standardDeviation) {
 // correction mu = ln(1+annualMean) - 0.5*sigma^2. periodsPerYear lets the same function
 // serve monthly (accumulation replay) or annual (drawdown) sampling: splitting mean/vol
 // this way keeps 12 compounded monthly draws statistically equivalent to 1 annual draw.
-function sampleLognormalGrossFactor(annualMean, annualVol, periodsPerYear = 1) {
+function sampleLognormalGrossFactor(annualMean, annualVol, periodsPerYear = 1, rng = Math.random) {
   const muAnnual = Math.log(1 + annualMean) - 0.5 * annualVol * annualVol;
   const muPeriod = muAnnual / periodsPerYear;
   const sigmaPeriod = annualVol / Math.sqrt(periodsPerYear);
-  const logReturn = generateGaussianRandom(muPeriod, sigmaPeriod);
+  const logReturn = generateGaussianRandom(muPeriod, sigmaPeriod, rng);
   return Math.exp(logReturn);
 }
 
@@ -688,7 +692,7 @@ function sampleLognormalGrossFactor(annualMean, annualVol, periodsPerYear = 1) {
 //
 // Falls back to the old fixed-starting-balance behavior if mcAccumulationSchedule isn't
 // supplied (e.g. an older caller), so this stays backward compatible.
-export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRatioAtRetirement = 0.5, mcAccumulationSchedule = null) {
+export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRatioAtRetirement = 0.5, mcAccumulationSchedule = null, rng = Math.random) {
   const iterations = 1000;
   const startAge = state.targetHorizonAge || 65;
   const endAge = 90;
@@ -750,7 +754,7 @@ export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRati
       brokerageCostBasis = mcAccumulationSchedule.initialBrokerageCostBasis ?? mcAccumulationSchedule.initialBrokerage;
 
       for (let m = 0; m < months; m++) {
-        const monthlyFactor = sampleLognormalGrossFactor(accumMeanReturn, accumVolatility, 12);
+        const monthlyFactor = sampleLognormalGrossFactor(accumMeanReturn, accumVolatility, 12, rng);
         preTax    *= monthlyFactor;
         roth      *= monthlyFactor;
         brokerage *= monthlyFactor;
@@ -828,14 +832,14 @@ export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRati
         ltcYearsRemaining -= 1;
       } else if (!ltcEverTriggered) {
         const onsetProbability = getLtcAnnualProbability(currentAge, LTC_ONSET_PROBABILITY);
-        if (Math.random() < onsetProbability) {
+        if (rng() < onsetProbability) {
           ltcEverTriggered = true;
           // Duration is right-skewed around a mean of ~3 years — most episodes are
           // shorter, a meaningful minority run much longer (e.g. dementia care).
-          const durationYears = Math.max(1, Math.round(LTC_MEAN_DURATION_YEARS * Math.exp(generateGaussianRandom(0, 0.5))));
+          const durationYears = Math.max(1, Math.round(LTC_MEAN_DURATION_YEARS * Math.exp(generateGaussianRandom(0, 0.5, rng))));
           // Cost severity also varies — home health aide vs. assisted living vs.
           // full nursing home care are very different price points.
-          const costMultiplier = Math.max(0.4, 1 + generateGaussianRandom(0, 0.3));
+          const costMultiplier = Math.max(0.4, 1 + generateGaussianRandom(0, 0.3, rng));
           ltcAnnualCostThisEpisode = ltcBaseCost * costMultiplier;
           ltcCostThisYear = ltcAnnualCostThisEpisode;
           ltcYearsRemaining = durationYears - 1; // this year counts as year 1 of the episode
@@ -936,7 +940,7 @@ export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRati
       // underlying investments, different tax wrapper). Brokerage compounds at the full
       // rate now — tax is only owed on realized gains at withdrawal (handled above via
       // cost basis), not annually on unrealized appreciation.
-      const randomFactor = sampleLognormalGrossFactor(drawdownMeanReturn, drawdownVolatility, 1);
+      const randomFactor = sampleLognormalGrossFactor(drawdownMeanReturn, drawdownVolatility, 1, rng);
 
       if (preTax > 0)    preTax    *= randomFactor;
       if (roth > 0)      roth      *= randomFactor;

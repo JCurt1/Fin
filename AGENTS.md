@@ -52,3 +52,14 @@ npx serve .
 ```
 
 Then open `http://localhost:3000`.
+
+## Running tests
+
+```bash
+node tests/run-all.mjs
+```
+
+Runs every `tests/*.test.mjs` file and reports pass/fail. The Monte Carlo tests use a
+seeded PRNG (`tests/test-utils.mjs`) instead of `Math.random()`, so results are
+reproducible — `runMonteCarloSimulation` accepts an optional `rng` parameter for exactly
+this purpose and defaults to `Math.random` in production.
