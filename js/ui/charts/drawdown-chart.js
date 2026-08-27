@@ -1,17 +1,10 @@
 import { formatCurrency } from '../../utils/currency.js';
 import { charts } from './chart-registry.js';
-
-function getThemeColors() {
-  const isDarkThemeActive = document.documentElement.getAttribute('data-theme') === 'dark';
-  return {
-    gridColor: isDarkThemeActive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-    labelColor: isDarkThemeActive ? '#8b949e' : '#9aa3b5',
-  };
-}
+import { getThemeColors, isDarkThemeActive, DRAWDOWN_COLORS } from './chart-palette.js';
 
 export function createDrawdownChart() {
   const ctxDrawdown = document.getElementById('drawdownChart').getContext('2d');
-  const { gridColor, labelColor } = getThemeColors();
+  const { gridColor, labelColor } = getThemeColors(isDarkThemeActive());
 
   charts.drawdownChart = new Chart(ctxDrawdown, {
     type: 'line',
@@ -21,8 +14,8 @@ export function createDrawdownChart() {
         {
           label: 'Total Portfolio',
           data: [],
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.04)',
+          borderColor: DRAWDOWN_COLORS.totalPortfolio.border,
+          backgroundColor: DRAWDOWN_COLORS.totalPortfolio.fill,
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 5,
@@ -32,7 +25,7 @@ export function createDrawdownChart() {
         {
           label: 'Pre-Tax (Traditional)',
           data: [],
-          borderColor: '#3b82f6',
+          borderColor: DRAWDOWN_COLORS.preTax.border,
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [4, 3],
@@ -44,7 +37,7 @@ export function createDrawdownChart() {
         {
           label: 'Roth',
           data: [],
-          borderColor: '#a855f7',
+          borderColor: DRAWDOWN_COLORS.roth.border,
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [4, 3],
@@ -56,7 +49,7 @@ export function createDrawdownChart() {
         {
           label: 'Taxable Brokerage',
           data: [],
-          borderColor: '#f59e0b',
+          borderColor: DRAWDOWN_COLORS.brokerage.border,
           backgroundColor: 'transparent',
           borderWidth: 1.5,
           borderDash: [4, 3],

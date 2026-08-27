@@ -1,17 +1,10 @@
 import { formatCurrency } from '../../utils/currency.js';
 import { charts } from './chart-registry.js';
-
-function getThemeColors() {
-  const isDarkThemeActive = document.documentElement.getAttribute('data-theme') === 'dark';
-  return {
-    gridColor: isDarkThemeActive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-    labelColor: isDarkThemeActive ? '#8b949e' : '#9aa3b5',
-  };
-}
+import { getThemeColors, isDarkThemeActive, GROWTH_COLORS } from './chart-palette.js';
 
 export function createGrowthChart() {
   const ctxCompounding = document.getElementById('growthChart').getContext('2d');
-  const { gridColor, labelColor } = getThemeColors();
+  const { gridColor, labelColor } = getThemeColors(isDarkThemeActive());
 
   charts.growthChart = new Chart(ctxCompounding, {
     type: 'line',
@@ -21,8 +14,8 @@ export function createGrowthChart() {
         {
           label: 'Liquid Portfolio',
           data: [],
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.04)',
+          borderColor: GROWTH_COLORS.liquidPortfolio.border,
+          backgroundColor: GROWTH_COLORS.liquidPortfolio.fill,
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 5,
@@ -36,8 +29,8 @@ export function createGrowthChart() {
           // down the mortgage plus home price appreciation, year over year.
           label: 'Home Equity',
           data: [],
-          borderColor: '#d97706',
-          backgroundColor: 'rgba(217, 119, 6, 0.04)',
+          borderColor: GROWTH_COLORS.homeEquity.border,
+          backgroundColor: GROWTH_COLORS.homeEquity.fill,
           borderWidth: 2,
           pointRadius: 0,
           pointHoverRadius: 5,

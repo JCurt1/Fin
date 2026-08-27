@@ -1,4 +1,5 @@
-let mcChartInstance = null;
+import { charts } from './chart-registry.js';
+import { getThemeColors, isDarkThemeActive, MONTE_CARLO_COLORS } from './chart-palette.js';
 
 export function updateMonteCarloChart(state, mcData) {
   const ctx = document.getElementById('chart-monte-carlo');
@@ -13,13 +14,15 @@ export function updateMonteCarloChart(state, mcData) {
   if (!mcData?.labels?.length) return;
 
   // Destroy existing chart before redrawing
-  if (mcChartInstance) {
-    try { mcChartInstance.destroy(); } catch (e) { /* ignore */ }
-    mcChartInstance = null;
+  if (charts.monteCarloChart) {
+    try { charts.monteCarloChart.destroy(); } catch (e) { /* ignore */ }
+    charts.monteCarloChart = null;
   }
 
+  const { gridColor, labelColor } = getThemeColors(isDarkThemeActive());
+
   try {
-    mcChartInstance = new ChartGlobal(ctx, {
+    charts.monteCarloChart = new ChartGlobal(ctx, {
       type: 'line',
       data: {
         labels: mcData.labels,
@@ -28,11 +31,11 @@ export function updateMonteCarloChart(state, mcData) {
           {
             label: '90th Percentile',
             data: mcData.p90Path,
-            borderColor: '#00cc66',
+            borderColor: MONTE_CARLO_COLORS.p90.border,
             borderWidth: 2,
             pointRadius: 0,
             fill: '+3', // fill down to p10 dataset (index offset)
-            backgroundColor: 'rgba(0, 204, 102, 0.08)',
+            backgroundColor: MONTE_CARLO_COLORS.p90.fill,
             tension: 0.2,
           },
           // --- Inner band: p25 to p75 (stronger fill) ---
@@ -43,7 +46,7 @@ export function updateMonteCarloChart(state, mcData) {
             borderWidth: 0,
             pointRadius: 0,
             fill: '+1', // fill down to p25
-            backgroundColor: 'rgba(51, 153, 255, 0.12)',
+            backgroundColor: MONTE_CARLO_COLORS.p75Fill,
             tension: 0.2,
           },
           {
@@ -58,7 +61,7 @@ export function updateMonteCarloChart(state, mcData) {
           {
             label: '10th Percentile',
             data: mcData.p10Path,
-            borderColor: '#ff4d4d',
+            borderColor: MONTE_CARLO_COLORS.p10.border,
             borderWidth: 2,
             borderDash: [4, 4],
             pointRadius: 0,
@@ -69,7 +72,7 @@ export function updateMonteCarloChart(state, mcData) {
           {
             label: 'Median (50th)',
             data: mcData.p50Path,
-            borderColor: '#3399ff',
+            borderColor: MONTE_CARLO_COLORS.p50.border,
             borderWidth: 2.5,
             pointRadius: 0,
             fill: false,
@@ -89,7 +92,7 @@ export function updateMonteCarloChart(state, mcData) {
             display: true,
             position: 'top',
             labels: {
-              color: '#8a92a6',
+              color: labelColor,
               font: { size: 10, family: 'DM Sans' },
               boxWidth: 12,
               // Only show meaningful labels
@@ -107,16 +110,16 @@ export function updateMonteCarloChart(state, mcData) {
         },
         scales: {
           y: {
-            grid: { color: 'rgba(255,255,255,0.05)' },
+            grid: { color: gridColor },
             ticks: {
-              color: '#8a92a6',
+              color: labelColor,
               font: { size: 10, family: 'monospace' },
               callback: value => '$' + Math.round(value).toLocaleString(),
             },
           },
           x: {
             grid: { display: false },
-            ticks: { color: '#8a92a6', font: { size: 10 } },
+            ticks: { color: labelColor, font: { size: 10 } },
           },
         },
       },

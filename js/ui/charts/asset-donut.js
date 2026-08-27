@@ -1,8 +1,9 @@
 import { charts } from './chart-registry.js';
+import { getThemeColors, isDarkThemeActive, ASSET_DONUT_COLORS } from './chart-palette.js';
 
 export function createAssetDonut(state) {
   const ctxAllocationDonut = document.getElementById('assetDonut').getContext('2d');
-  const isDarkThemeActive = document.documentElement.getAttribute('data-theme') === 'dark';
+  const { legendLabelColor } = getThemeColors(isDarkThemeActive());
 
   charts.assetDonut = new Chart(ctxAllocationDonut, {
     type: 'doughnut',
@@ -10,7 +11,7 @@ export function createAssetDonut(state) {
       labels: ['Cash', 'Retirement', 'Brokerage', 'Property'],
       datasets: [{
         data: [state.cash, state.retirement, state.brokerage, state.homeValue],
-        backgroundColor: ['#2563eb', '#0e9f6e', '#d97706', '#7c3aed'],
+        backgroundColor: ASSET_DONUT_COLORS,
         borderWidth: 0,
       }],
     },
@@ -22,7 +23,7 @@ export function createAssetDonut(state) {
         legend: {
           position: 'right',
           labels: {
-            color: isDarkThemeActive ? '#c9d1d9' : '#0d1117',
+            color: legendLabelColor,
             font: { family: 'DM Sans', size: 11 },
             boxWidth: 12,
             padding: 10,
