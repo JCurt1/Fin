@@ -33,7 +33,7 @@ Balance sheet card `data-key` attributes must match keys in `js/state/defaults.j
 - Financial math inside `ui/*` (except `formatCurrency` / `parseInputVal`)
 - New global variables on `window`
 - Inline `onclick` handlers — use `addEventListener` in `ui/*` modules
-- Hardcoding constants that belong in `config/constants.js` or `config/tax-brackets-2024.js`
+- Hardcoding constants that belong in `config/constants.js` or `config/tax-brackets-2026.js`
 
 ## Safe extension pattern
 

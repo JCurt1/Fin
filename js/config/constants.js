@@ -10,6 +10,17 @@ export const MAX_401K_CATCHUP_60_63 = 35750; // Age 60–63: +$11,250 super catc
 // as directionally correct, not authoritative, until confirmed.
 export const MAX_ANNUAL_ADDITIONS = 72000;
 
+// Returns the correct annual 401(k) elective-deferral limit for a given age,
+// applying SECURE 2.0 catch-up tiers. Single source of truth — previously this
+// same if/else chain was duplicated in tax.js, wealth-simulation.js, and
+// derived-assumptions.js, which meant a future limit change had to be hunted
+// down in three places instead of one.
+export function getMax401kForAge(age) {
+  if (age >= 60 && age <= 63) return MAX_401K_CATCHUP_60_63;
+  if (age >= 50) return MAX_401K_CATCHUP_50;
+  return MAX_401K_INDIVIDUAL;
+}
+
 // HSA Contribution Limits (Triple Tax Advantaged) — 2026 IRS official
 export const HSA_LIMITS = {
   single: 4400,

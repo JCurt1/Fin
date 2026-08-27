@@ -1,5 +1,5 @@
 import { computeFederalTax } from '../config/tax-brackets-2026.js';
-import { STANDARD_DEDUCTION, estimateSsAnnualBenefit, SS_FULL_RETIREMENT_AGE, MAX_401K_INDIVIDUAL, MAX_401K_CATCHUP_50, MAX_401K_CATCHUP_60_63, getStateTaxRate, ssTaxableFraction, computeCapitalGainsRate } from '../config/constants.js';
+import { STANDARD_DEDUCTION, estimateSsAnnualBenefit, SS_FULL_RETIREMENT_AGE, getMax401kForAge, getStateTaxRate, ssTaxableFraction, computeCapitalGainsRate } from '../config/constants.js';
 
 
 /**
@@ -93,8 +93,7 @@ export function deriveRetirementAssumptions(state) {
 export function deriveInvestmentRate(state, savingsMargin) {
   const gross = state.grossIncome || 1;
   const filerAge = state.initialAge || 0;
-  const derivedCap = (filerAge >= 60 && filerAge <= 63) ? MAX_401K_CATCHUP_60_63
-    : filerAge >= 50 ? MAX_401K_CATCHUP_50 : MAX_401K_INDIVIDUAL;
+  const derivedCap = getMax401kForAge(filerAge);
   const annual401k    = Math.min(gross * (state.deferral401k / 100), derivedCap);
   const annualSurplus = Math.max(0, (savingsMargin || 0) * 12);
   const totalSavings  = annual401k + annualSurplus;

@@ -3,7 +3,7 @@ import {
   HSA_LIMITS, STANDARD_DEDUCTION,
   SOCIAL_SECURITY_RATE, SOCIAL_SECURITY_WAGE_BASE,
   MEDICARE_RATE, ADDITIONAL_MEDICARE_RATE, ADDITIONAL_MEDICARE_THRESHOLD,
-  getStateTaxRate,
+  getStateTaxRate, getMax401kForAge,
 } from '../config/constants.js';
 import { computeFederalTax } from '../config/tax-brackets-2026.js';
 
@@ -35,14 +35,7 @@ export function computeTax(state) {
   // 1. 401(k) limits — catch-up contributions apply at age 50+
   // Age 60–63: SECURE 2.0 super catch-up ($35,750); Age 50–59 and 64+: standard catch-up ($32,500)
   const filerAge = state.initialAge || 0;
-  let max401kAllowed;
-  if (filerAge >= 60 && filerAge <= 63) {
-    max401kAllowed = MAX_401K_CATCHUP_60_63;
-  } else if (filerAge >= 50) {
-    max401kAllowed = MAX_401K_CATCHUP_50;
-  } else {
-    max401kAllowed = MAX_401K_INDIVIDUAL;
-  }
+  const max401kAllowed = getMax401kForAge(filerAge);
 
   const maxHsaAllowed = status === 'married' ? HSA_LIMITS.married : HSA_LIMITS.single;
 

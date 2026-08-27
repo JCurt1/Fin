@@ -1,4 +1,4 @@
-import { COAST_FI_REFERENCE_AGE, DRAWDOWN_GROWTH_RATE, DRAWDOWN_VOLATILITY, DRAWDOWN_INFLATION_RATE, DRAWDOWN_END_AGE, CASH_BUFFER_YIELD, estimateSsAnnualBenefit, SS_FULL_RETIREMENT_AGE, STANDARD_DEDUCTION, MAX_401K_INDIVIDUAL, MAX_401K_CATCHUP_50, MAX_401K_CATCHUP_60_63, MAX_ANNUAL_ADDITIONS, rmdStartAge, rmdDivisorForAge, getStateTaxRate, ssTaxableFraction, computeCapitalGainsRate, MEDICARE_ELIGIBILITY_AGE, PRE_MEDICARE_HEALTH_COST_MONTHLY, MEDICARE_HEALTH_COST_MONTHLY, HEALTHCARE_INFLATION_RATE, computeIrmaaSurcharge, computeAcaSubsidizedAnnualCost, LTC_EXPECTED_VALUE_ANNUAL_PROBABILITY, LTC_ONSET_PROBABILITY, LTC_BASE_ANNUAL_COST, LTC_MEAN_DURATION_YEARS, getLtcAnnualProbability } from '../config/constants.js';
+import { COAST_FI_REFERENCE_AGE, DRAWDOWN_GROWTH_RATE, DRAWDOWN_VOLATILITY, DRAWDOWN_INFLATION_RATE, DRAWDOWN_END_AGE, CASH_BUFFER_YIELD, estimateSsAnnualBenefit, SS_FULL_RETIREMENT_AGE, STANDARD_DEDUCTION, getMax401kForAge, MAX_401K_INDIVIDUAL, MAX_401K_CATCHUP_50, MAX_401K_CATCHUP_60_63, MAX_ANNUAL_ADDITIONS, rmdStartAge, rmdDivisorForAge, getStateTaxRate, ssTaxableFraction, computeCapitalGainsRate, MEDICARE_ELIGIBILITY_AGE, PRE_MEDICARE_HEALTH_COST_MONTHLY, MEDICARE_HEALTH_COST_MONTHLY, HEALTHCARE_INFLATION_RATE, computeIrmaaSurcharge, computeAcaSubsidizedAnnualCost, LTC_EXPECTED_VALUE_ANNUAL_PROBABILITY, LTC_ONSET_PROBABILITY, LTC_BASE_ANNUAL_COST, LTC_MEAN_DURATION_YEARS, getLtcAnnualProbability } from '../config/constants.js';
 import { computeFederalTax } from '../config/tax-brackets-2026.js';
 import { computeAnnualFica } from './tax.js';
 
@@ -140,9 +140,7 @@ export function simulateWealth(state, deps) {
 
     // 401(k) contributions — capped at IRS limit, with age-based catch-up
     const activeAge = currentSimulationAge + currentYearIndex;
-    const annual401kCap = (activeAge >= 60 && activeAge <= 63)
-      ? MAX_401K_CATCHUP_60_63
-      : activeAge >= 50 ? MAX_401K_CATCHUP_50 : MAX_401K_INDIVIDUAL;
+    const annual401kCap = getMax401kForAge(activeAge);
     const annual401k       = Math.min(grownGross * deferralRate, annual401kCap);
     const annualTrad401k   = annual401k * tradRatio;
     const annualRoth401k   = annual401k - annualTrad401k;
@@ -481,7 +479,7 @@ if (!absoluteCoastAchievedAge &&
     // Tax on pre-tax withdrawals — Roth is tax-free at withdrawal, brokerage is handled
     // separately below via cost-basis-aware capital gains.
     const retirementStatus = state.filingStatus === 'married' ? 'married' : 'single';
-    const standardDed = retirementStatus === 'married' ? 32200 : 16100;
+    const standardDed = STANDARD_DEDUCTION[retirementStatus];
 
     // Social Security taxability: federal law taxes up to 85% of SS based on a combined-
     // income test (portfolio withdrawal income + 50% of the SS benefit). Previously SS was
@@ -723,7 +721,7 @@ export function runMonteCarloSimulation(state, terminalAccumulatedNW, preTaxRati
   const mcSsStartAge         = Math.max(startAge, SS_FULL_RETIREMENT_AGE);
 
   const retirementFilingStatus = state.filingStatus === 'married' ? 'married' : 'single';
-  const mcStandardDed = retirementFilingStatus === 'married' ? 32200 : 16100;
+  const mcStandardDed = STANDARD_DEDUCTION[retirementFilingStatus];
   // State tax rate for retirement withdrawals — was referenced below but never declared,
   // which is what just broke the whole calculation. Fixed now.
   const mcStateRate = getStateTaxRate(state);
